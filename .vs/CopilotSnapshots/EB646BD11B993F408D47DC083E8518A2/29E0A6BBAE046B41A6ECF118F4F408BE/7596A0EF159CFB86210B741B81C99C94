@@ -1,0 +1,74 @@
+﻿
+namespace Eventos_S4_Tr1
+{
+    public partial class frm_Eventos : Form
+    {
+        public frm_Eventos()
+        {
+            InitializeComponent();
+        }
+
+        private void pnl_Evento_DD_DragDrop(object sender, DragEventArgs e)
+        {
+
+        }
+
+        private void txt_Evento_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (!char.IsDigit(e.KeyChar) && !char.IsControl(e.KeyChar))
+            {
+                e.Handled = true;
+                MessageBox.Show("Solo se permiten teclas numéricas");
+            }
+        }
+
+        private void btn_Timer_Click(object sender, EventArgs e)
+        {
+            Timer.Enabled = true;
+        }
+
+        private void lbl_evento_Click(object sender, EventArgs e)
+        {
+            if (lbl_evento.ForeColor == Color.FromArgb(0, 119, 182) || lbl_evento.BackColor == Color.FromArgb(202, 240, 248))
+            {
+                lbl_evento.ForeColor = Color.Green;
+                lbl_evento.BackColor = Color.Yellow;
+                lbl_evento.Text = "CLICKEASTE EL LABEL (CLICK PARA CAMBIAR)";
+            }
+            else
+            {
+                lbl_evento.ForeColor = Color.FromArgb(0, 119, 182);
+                lbl_evento.BackColor = Color.FromArgb(202, 240, 248);
+                lbl_evento.Text = "LABEL DE EVENTO(CLICK PARA CAMBIAR ESTADO)";
+            }
+        }
+        int segundos = 0;
+        int minutos = 0;
+        int horas = 0;
+        private void Timer_Tick(object sender, EventArgs e)
+        {
+            while (horas < 24)
+            {
+                horas++;
+                minutos = 0;
+                lbl_Resul_Tiemp.Text = Convert.ToString(horas) + " : " + Convert.ToString(minutos) + " : " + Convert.ToString(segundos);
+                while (minutos <= 59)
+                {
+                    segundos = 0;
+                    minutos++;
+                    lbl_Resul_Tiemp.Text = Convert.ToString(minutos) + " : " + Convert.ToString(segundos);
+                    while (segundos <= 59)
+                    {
+                        segundos++;
+                        lbl_Resul_Tiemp.Text = Convert.ToString(segundos);
+                    }
+                }
+            }
+        }
+
+        private void btn_Parar_Timer_Click(object sender, EventArgs e)
+        {
+            Timer.Stop();
+        }
+    }
+}

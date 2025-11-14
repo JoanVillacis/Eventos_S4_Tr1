@@ -1,0 +1,184 @@
+﻿using System;
+using System.Drawing;
+using System.IO;
+using System.Windows.Forms;
+
+namespace Eventos_S4_Tr1
+{
+    public partial class frm_Eventos : Form
+    {
+        public frm_Eventos()
+        {
+            InitializeComponent();
+
+            // AllowDrop habilita que el control acepte operaciones Drag & Drop
+            pnl_Evento_DD.AllowDrop = true;
+
+            // Aquí usamos '+=' para suscribir el método 'pnl_Evento_DD_DragEnter' al evento 'DragEnter' del panel.
+            // El operador '+=' añade un suscriptor al evento; puedes tener varios suscriptores.
+            // Equivalente conceptual:
+            // pnl_Evento_DD.DragEnter += pnl_Evento_DD_DragEnter;
+            // Ejemplo con lambda (handler inline) — útil para handlers cortos:
+            // pnl_Evento_DD.DragEnter += (s, e) => { if (e.Data != null) e.Effect = DragDropEffects.Copy; };
+            // En este proyecto registramos el método nombrado para mantener tu estilo.
+            pnl_Evento_DD.DragEnter += pnl_Evento_DD_DragEnter;
+
+            // Nota: el evento DragDrop está enlazado desde el diseñador (Form1.Designer.cs):
+            // pnl_Evento_DD.DragDrop += pnl_Evento_DD_DragDrop;
+            // En el diseñador también se configura 'Timer.Interval =1000' y 'Timer.Tick += Timer_Tick;'
+        }
+
+        // Este método se ejecuta cuando el cursor entra sobre el panel mientras arrastras.
+        // Aquí negociamos (decimos) si aceptamos lo que se está arrastrando estableciendo 'e.Effect'.
+        // Sin este paso, el Explorador de Windows no siempre permitirá soltar (no cambia el cursor a permitido).
+        private void pnl_Evento_DD_DragEnter(object sender, DragEventArgs e)
+        {
+            // Verificar si se están arrastrando archivos o un bitmap
+            if (e.Data != null && e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                string[] archivos = (string[])e.Data.GetData(DataFormats.FileDrop);
+                if (archivos.Length > 0)
+                {
+                    string ext = Path.GetExtension(archivos[0]).ToLowerInvariant();
+                    // Extensiones de imagen permitidas
+                    if (ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".bmp" || ext == ".gif")
+                    {
+                        // Al asignar Copy, Windows muestra que se puede soltar y permitirá el Drop
+                        e.Effect = DragDropEffects.Copy;
+                        return;
+                    }
+                }
+            }
+
+            // Soportar también datos en formato Bitmap (otras aplicaciones)
+            if (e.Data != null && e.Data.GetDataPresent(DataFormats.Bitmap))
+            {
+                e.Effect = DragDropEffects.Copy;
+                return;
+            }
+
+            // No es un formato aceptado: no permitir el drop
+            e.Effect = DragDropEffects.None;
+        }
+
+        private void pnl_Evento_DD_DragDrop(object sender, DragEventArgs e)
+        {
+            try
+            {
+                // Si vienen archivos (FileDrop)
+                if (e.Data != null && e.Data.GetDataPresent(DataFormats.FileDrop))
+                {
+                    string[] archivos = (string[])e.Data.GetData(DataFormats.FileDrop);
+                    if (archivos.Length > 0)
+                    {
+                        string ruta = archivos[0];
+
+                        // Validar extensión antes de intentar cargar
+                        string ext = Path.GetExtension(ruta).ToLowerInvariant();
+                        if (ext != ".jpg" && ext != ".jpeg" && ext != ".png" && ext != ".bmp" && ext != ".gif")
+                        {
+                            MessageBox.Show("Formato no soportado. Selecciona un archivo de imagen.", "Formato no soportado", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            return;
+                        }
+
+                        // Cargar imagen sin bloquear el archivo: clonamos la imagen en memoria
+                        using (Image img = Image.FromFile(ruta))
+                        {
+                            pnl_Evento_DD.BackgroundImage?.Dispose();
+                            pnl_Evento_DD.BackgroundImage = new Bitmap(img);
+                            pnl_Evento_DD.BackgroundImageLayout = ImageLayout.Zoom;
+                        }
+                    }
+
+                    return;
+                }
+
+                // Si vino un Bitmap directamente (por ejemplo desde otra app)
+                if (e.Data != null && e.Data.GetDataPresent(DataFormats.Bitmap))
+                {
+                    Image bmp = (Image)e.Data.GetData(DataFormats.Bitmap);
+                    if (bmp != null)
+                    {
+                        pnl_Evento_DD.BackgroundImage?.Dispose();
+                        pnl_Evento_DD.BackgroundImage = new Bitmap(bmp);
+                        pnl_Evento_DD.BackgroundImageLayout = ImageLayout.Zoom;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al cargar la imagen: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void txt_Evento_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            // Este handler se suscribe en el diseñador: txt_Evento.KeyPress += txt_Evento_KeyPress;
+            // Aquí validamos que solo se permitan caracteres numéricos y controles (backspace, etc.)
+            if (!char.IsDigit(e.KeyChar) && !char.IsControl(e.KeyChar))
+            {
+                e.Handled = true;
+                MessageBox.Show("Solo se permiten teclas numéricas");
+            }
+        }
+
+        private void btn_Timer_Click(object sender, EventArgs e)
+        {
+            // Ejemplo de suscripción usando lambda (alternativa a tener un método separado):
+            // btn_Timer.Click += (s, ev) => Timer.Start();
+            // En este proyecto usamos el método nombrado btn_Timer_Click (registrado en el diseñador)
+            Timer.Start();
+        }
+
+        private void lbl_evento_Click(object sender, EventArgs e)
+        {
+            // El evento Click del label está suscrito desde el diseñador: lbl_evento.Click += lbl_evento_Click;
+            if (lbl_evento.ForeColor == Color.FromArgb(0, 119, 182) || lbl_evento.BackColor == Color.FromArgb(202, 240, 248))
+            {
+                lbl_evento.ForeColor = Color.Green;
+                lbl_evento.BackColor = Color.Yellow;
+                lbl_evento.Text = "CLICKEASTE EL LABEL (CLICK PARA CAMBIAR)";
+            }
+            else
+            {
+                lbl_evento.ForeColor = Color.FromArgb(0, 119, 182);
+                lbl_evento.BackColor = Color.FromArgb(202, 240, 248);
+                lbl_evento.Text = "LABEL DE EVENTO(CLICK PARA CAMBIAR ESTADO)";
+            }
+        }
+        int segundos = 0;
+        int minutos = 0;
+        int horas = 0;
+        private void Timer_Tick(object sender, EventArgs e)
+        {
+            // Timer.Tick está suscrito en el diseñador: Timer.Tick += Timer_Tick; y Timer.Interval =1000;
+            segundos++;
+            if (segundos >= 60)
+            {
+                segundos = 0;
+                minutos++;
+                if (minutos >= 60)
+                {
+                    minutos = 0;
+                    horas++;
+                    if (horas >= 24)
+                    {
+                        horas = 0;
+                    }
+                }
+            }
+
+            lbl_Resul_Tiemp.Text = string.Format("{0:D2} : {1:D2} : {2:D2}", horas, minutos, segundos);
+        }
+
+        private void btn_Parar_Timer_Click(object sender, EventArgs e)
+        {
+            Timer.Stop();
+        }
+
+        private void btn_Salir_Click(object sender, EventArgs e)
+        {
+            Application.Exit();
+        }
+    }
+}
